@@ -14,6 +14,9 @@ SILVER_PATH = DATA_ROOT / "silver"
 _VALOR_MIN = 0.0
 _VALOR_MAX = 0.2
 
+# Max legitimate calendar gap: Christmas + New Year holiday block in Brazil (~10 days)
+_MAX_DATE_GAP_DAYS = 12
+
 
 def _validate_bronze(df: pd.DataFrame) -> None:
     """Quality gate: assert Bronze schema and completeness before transforming."""
@@ -79,6 +82,19 @@ def transform_selic() -> int:
     unexpected_years = set(df["ano"].unique()) - set(range(2020, 2025))
     if unexpected_years:
         raise ValueError(f"Silver quality gate failed: unexpected years {unexpected_years}")
+
+    duplicates = df["data"].duplicated()
+    if duplicates.any():
+        raise ValueError(
+            f"Silver quality gate failed: {duplicates.sum()} duplicate dates detected"
+        )
+
+    max_gap_val = df["data"].diff().dt.days.max()
+    if pd.notna(max_gap_val) and int(max_gap_val) > _MAX_DATE_GAP_DAYS:
+        raise ValueError(
+            f"Silver quality gate failed: gap of {int(max_gap_val)} days detected in date series "
+            f"(max allowed: {_MAX_DATE_GAP_DAYS})"
+        )
 
     SILVER_PATH.mkdir(parents=True, exist_ok=True)
     output_path = SILVER_PATH / "selic_trusted.parquet"

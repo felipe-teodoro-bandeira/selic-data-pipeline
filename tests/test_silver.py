@@ -89,3 +89,39 @@ class TestTransformSelic:
 
         with pytest.raises(ValueError, match="unexpected years"):
             transform_selic()
+
+    def test_quality_gate_duplicate_dates(self, tmp_path, monkeypatch):
+        df = pd.DataFrame({
+            "data": ["02/01/2020", "02/01/2020", "03/01/2020"],
+            "valor": ["0.0267", "0.0267", "0.0267"],
+        })
+        silver_dir = tmp_path / "silver"
+        monkeypatch.setattr("silver.transform.BRONZE_PATH", _write_bronze(tmp_path, df))
+        monkeypatch.setattr("silver.transform.SILVER_PATH", silver_dir)
+
+        with pytest.raises(ValueError, match="duplicate dates"):
+            transform_selic()
+
+    def test_quality_gate_date_gap_too_large(self, tmp_path, monkeypatch):
+        df = pd.DataFrame({
+            "data": ["02/01/2020", "20/01/2020"],  # 18-day gap
+            "valor": ["0.0267", "0.0267"],
+        })
+        silver_dir = tmp_path / "silver"
+        monkeypatch.setattr("silver.transform.BRONZE_PATH", _write_bronze(tmp_path, df))
+        monkeypatch.setattr("silver.transform.SILVER_PATH", silver_dir)
+
+        with pytest.raises(ValueError, match="gap of"):
+            transform_selic()
+
+    def test_passes_with_legitimate_holiday_gap(self, tmp_path, monkeypatch):
+        """Christmas + New Year block (~10 days) must not trigger the gap gate."""
+        df = pd.DataFrame({
+            "data": ["24/12/2020", "04/01/2021"],  # 11-day gap, within threshold
+            "valor": ["0.0267", "0.0267"],
+        })
+        silver_dir = tmp_path / "silver"
+        monkeypatch.setattr("silver.transform.BRONZE_PATH", _write_bronze(tmp_path, df))
+        monkeypatch.setattr("silver.transform.SILVER_PATH", silver_dir)
+
+        transform_selic()  # must not raise
