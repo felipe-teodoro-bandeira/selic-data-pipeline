@@ -106,20 +106,25 @@ pytest --cov=. --cov-report=term-missing
 git clone <repo-url>
 cd beanalytic-selic-pipeline
 
-# 2. Crie a pasta de dados (necessária pelo volume)
+# 2. Configure as variáveis de ambiente
+cp .env.example .env
+# Para produção: edite .env e gere uma nova Fernet key
+# python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
+# 3. Crie a pasta de dados (necessária pelo volume)
 mkdir -p data
 
-# 3. Build e inicialização (aguarda ~60s na primeira vez)
+# 4. Build e inicialização (aguarda ~60s na primeira vez)
 docker compose up --build airflow-init
 
-# 4. Suba os serviços
+# 5. Suba os serviços
 docker compose up -d airflow-webserver airflow-scheduler
 
-# 5. Acesse o Airflow UI
+# 6. Acesse o Airflow UI
 # http://localhost:8080
 # Usuário: admin | Senha: admin
 
-# 6. Ative e dispare a DAG manualmente
+# 7. Ative e dispare a DAG manualmente
 # UI → DAGs → selic_pipeline → Enable → Trigger DAG ▶
 ```
 
