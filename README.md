@@ -71,7 +71,7 @@ Cada camada tem um quality gate que falha o task com `ValueError` antes de persi
 
 ## Testes
 
-Suite de 23 testes unitários cobrindo quality gates, transformações e a lógica de taxa composta. Não dependem do Airflow nem de I/O real — usam `monkeypatch` nos path constants e `tmp_path` do pytest para isolar filesystem.
+Suite de 35 testes unitários cobrindo quality gates, transformações e a lógica de taxa composta. Não dependem do Airflow nem de I/O real — usam `monkeypatch` nos path constants e `tmp_path` do pytest para isolar filesystem.
 
 ```bash
 # Instalar dependências de desenvolvimento
@@ -86,9 +86,9 @@ pytest --cov=. --cov-report=term-missing
 
 | Módulo | Testes | O que cobre |
 |--------|--------|-------------|
-| `test_bronze.py` | 4 | Quality gate de row count, persistência do Parquet |
-| `test_silver.py` | 9 | Type parsing, colunas derivadas, sort, quality gates |
-| `test_gold.py` | 10 | `_compound_rate`, agregações mensais/anuais, quality gates |
+| `test_bronze.py` | 9 | Schema da API, bounds dinâmicos de row count, URL parametrizada |
+| `test_silver.py` | 14 | Type parsing, null ratio gate, colunas derivadas, sort, quality gates |
+| `test_gold.py` | 12 | `_compound_rate`, sort por data, `is_base_month`, quality gates |
 
 ---
 
