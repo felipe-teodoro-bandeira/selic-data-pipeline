@@ -47,9 +47,11 @@ expectations, preventing silent data corruption downstream.
     bronze_task = PythonOperator(
         task_id="bronze_ingest",
         python_callable=fetch_selic_raw,
+        op_kwargs={"start": "01/01/2020", "end": "31/12/2024"},
         doc_md=(
             "Fetch raw SELIC data from BCB API and save as Parquet. "
-            "Validates payload size (>= 1000 rows) before persisting."
+            "Date range is explicit via op_kwargs — override to reprocess a different window. "
+            "Row count is validated against dynamic bounds derived from the requested range."
         ),
     )
 

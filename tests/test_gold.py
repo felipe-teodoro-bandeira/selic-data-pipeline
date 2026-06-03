@@ -109,6 +109,29 @@ class TestAggregateSelic:
         with pytest.raises(ValueError, match="quality gate"):
             aggregate_selic()
 
+    def test_monthly_output_sorted_by_date(self, tmp_path, monkeypatch):
+        """Monthly output must be ordered by data_inicio regardless of groupby order."""
+        df = _make_silver_df(months=2)
+        monkeypatch.setattr("gold.aggregate.SILVER_PATH", _write_silver(tmp_path, df))
+        monkeypatch.setattr("gold.aggregate.GOLD_PATH", tmp_path / "gold")
+
+        aggregate_selic()
+
+        monthly = pd.read_parquet(tmp_path / "gold" / "selic_mensal.parquet")
+        assert monthly["data_inicio"].is_monotonic_increasing
+
+    def test_is_base_month_true_only_for_first_row(self, tmp_path, monkeypatch):
+        df = _make_silver_df(months=2)
+        monkeypatch.setattr("gold.aggregate.SILVER_PATH", _write_silver(tmp_path, df))
+        monkeypatch.setattr("gold.aggregate.GOLD_PATH", tmp_path / "gold")
+
+        aggregate_selic()
+
+        monthly = pd.read_parquet(tmp_path / "gold" / "selic_mensal.parquet")
+        assert "is_base_month" in monthly.columns
+        assert monthly["is_base_month"].sum() == 1
+        assert monthly.loc[0, "is_base_month"] == True  # noqa: E712
+
     def test_returns_correct_row_counts(self, tmp_path, monkeypatch):
         df = _make_silver_df(months=2)
         monkeypatch.setattr("gold.aggregate.SILVER_PATH", _write_silver(tmp_path, df))

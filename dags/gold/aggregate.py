@@ -64,6 +64,13 @@ def aggregate_selic() -> GoldSummary:
     # Variation in percentage points vs previous month's compound rate
     monthly["variacao_mensal_pp"] = monthly["taxa_acumulada_mensal"].diff()
 
+    # Explicit boolean flag: True only for the first period (no previous month to diff against).
+    # Prevents silent NaN propagation in BI tools that filter out NULL rows.
+    monthly["is_base_month"] = monthly["variacao_mensal_pp"].isna()
+
+    # Sort by actual date, not lexicographic string — guards against future format changes
+    monthly = monthly.sort_values("data_inicio").reset_index(drop=True)
+
     # --- Annual aggregation ---
     annual = (
         df.groupby("ano", sort=True)
